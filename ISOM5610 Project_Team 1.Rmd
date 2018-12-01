@@ -4,3 +4,18 @@ author: "Team 1"
 date: "14 December 2018"
 output: pdf_document
 ---
+
+```{r}
+setwd("~/MSBA/ISOM5610/final")
+claim <- read.table("Claim.csv", sep = ",", header = TRUE)
+summary(claim)
+claim <- claim[-1]
+str(claim)
+```
+
+Ëæ±ãÊÔÊÔ
+```{r}
+fit <- glm(Claim~., data = Claim)
+fit.1 <- step(fit)
+summary(fit.1)
+```
