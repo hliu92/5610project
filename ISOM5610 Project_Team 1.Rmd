@@ -13,9 +13,14 @@ claim <- claim[-1]
 str(claim)
 ```
 
-Ëæ±ãÊÔÊÔ
+????????
 ```{r}
 fit <- glm(Claim~., data = Claim)
 fit.1 <- step(fit)
 summary(fit.1)
+```
+
+```{r}
+library(ggplot2)
+
 ```
