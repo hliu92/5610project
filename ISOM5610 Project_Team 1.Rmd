@@ -1,0 +1,6 @@
+---
+title: "ISOM5610 Project"
+author: "Team 1"
+date: "14 December 2018"
+output: pdf_document
+---
