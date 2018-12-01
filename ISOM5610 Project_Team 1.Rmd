@@ -11,13 +11,95 @@ claim <- read.table("Claim.csv", sep = ",", header = TRUE)
 summary(claim)
 claim <- claim[-1]
 str(claim)
+summary(claim$Power)
+summary(claim$Gas)
+summary(claim$Region)
+
 ```
 
-????????
+
+
+There is no missing value. Claim: binary. Power: 12 categories. Brand:7 categories. Gas: binary. Region: 10 regions.
+
 ```{r}
-fit <- glm(Claim~., data = Claim)
-fit.1 <- step(fit)
-summary(fit.1)
+library(ggplot2)
+library(RColorBrewer)
+
+
+ds1 <- ggplot(claim, aes(x=Exposure)) + 
+  geom_density(aes(fill=factor(Claim)),alpha=0.5)+
+  labs(title="Data Exploration", 
+       subtitle="Distribution of claim among different exposure", y="Claim", x="Exposure")+
+  scale_fill_manual(values = c(brewer.pal(7, "Reds")[5],brewer.pal(7, "Blues")[5]),
+                    labels = c("Claim=0", "Claim=1"))
+plot(ds1)
+
+
+bar1 <- ggplot(claim, aes(x = Power)) + geom_bar(aes(fill=factor(Claim)))+
+   labs(title="Data Exploration", 
+       subtitle="Distribution of claim among different Power types", y="Claim", x="Power")+
+scale_fill_manual(values = c(brewer.pal(7, "Reds")[4],brewer.pal(7, "Blues")[5]),
+                    labels = c("Claim=0", "Claim=1"))
+
+plot(bar1)
+
+
+ds2 <- ggplot(claim, aes(x=CarAge)) + 
+  geom_density(aes(fill=factor(Claim)),alpha=0.5)+
+  labs(title="Data Exploration", 
+       subtitle="Distribution of claim among different car ages", y="Claim", x="CarAge")+
+  scale_fill_manual(values = c(brewer.pal(7, "Reds")[5],brewer.pal(7, "Blues")[5]),
+                    labels = c("Claim=0", "Claim=1"))
+plot(ds2)
+
+
+ds3 <- ggplot(claim, aes(x=DriverAge)) + 
+  geom_density(aes(fill=factor(Claim)),alpha=0.5)+
+  labs(title="Data Exploration", 
+       subtitle="Distribution of claim among different driver ages", y="Claim", x="DriverAge")+
+  scale_fill_manual(values = c(brewer.pal(7, "Reds")[5],brewer.pal(7, "Blues")[5]),
+                    labels = c("Claim=0", "Claim=1"))
+plot(ds3)
+
+
+bar2 <- ggplot(claim, aes(x = Brand)) + geom_bar(aes(fill=factor(Claim)))+
+   labs(title="Data Exploration", 
+       subtitle="Distribution of claim among different brands", y="Claim", x="Brand")+
+scale_fill_manual(values = c(brewer.pal(7, "Reds")[4],brewer.pal(7, "Blues")[5]),
+                    labels = c("Claim=0", "Claim=1"))
+
+plot(bar2)
+
+bar3 <- ggplot(claim, aes(x = Gas)) + geom_bar(aes(fill=factor(Claim)))+
+   labs(title="Data Exploration", 
+       subtitle="Distribution of claim among different Gas types", y="Claim", x="Gas")+
+scale_fill_manual(values = c(brewer.pal(7, "Reds")[4],brewer.pal(7, "Blues")[5]),
+                    labels = c("Claim=0", "Claim=1"))
+
+plot(bar3)
+
+bar4 <- ggplot(claim, aes(x = Region)) + geom_bar(aes(fill=factor(Claim)))+
+   labs(title="Data Exploration", 
+       subtitle="Distribution of claim among different regions", y="Claim", x="Region")+
+scale_fill_manual(values = c(brewer.pal(7, "Reds")[4],brewer.pal(7, "Blues")[5]),
+                    labels = c("Claim=0", "Claim=1"))
+
+plot(bar4)
+
+ds4 <- ggplot(claim, aes(x=Density)) + 
+  geom_density(aes(fill=factor(Claim)),alpha=0.5)+
+  labs(title="Data Exploration", 
+       subtitle="Distribution of claim among different densities", y="Claim", x="Density")+
+  scale_fill_manual(values = c(brewer.pal(7, "Reds")[5],brewer.pal(7, "Blues")[5]),
+                    labels = c("Claim=0", "Claim=1"))
+plot(ds4)
+```
+
+
+
+```{r}
+fit <- glm(Claim~., data = claim)
+summary(fit)
 ```
 
 ```{r}
