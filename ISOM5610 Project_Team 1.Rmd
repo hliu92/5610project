@@ -17,7 +17,14 @@ summary(claim$Region)
 
 ```
 
-
+```{r}
+avg_power <- data.frame(sapply(split(claim$Claim,claim$Power),mean))
+# colnames(avg_power) <- 'avg'
+# avg_power$Power <- rownames(avg_power)
+avg_brand <- sapply(split(claim$Claim,claim$Brand),mean)
+avg_region <- sapply(split(claim$Claim,claim$Region),mean)
+## this chunk calculate average values in different categories
+```
 
 There is no missing value. Claim: binary. Power: 12 categories. Brand:7 categories. Gas: binary. Region: 10 regions.
 
@@ -35,7 +42,7 @@ ds1 <- ggplot(claim, aes(x=Exposure)) +
 plot(ds1)
 
 
-bar1 <- ggplot(claim, aes(x = Power)) + geom_bar(aes(fill=factor(Claim)))+
+bar1 <- ggplot() + geom_bar(data=claim, aes(x=Power,fill=factor(Claim)))+
    labs(title="Data Exploration", 
        subtitle="Distribution of claim among different Power types", y="Claim", x="Power")+
 scale_fill_manual(values = c(brewer.pal(7, "Reds")[4],brewer.pal(7, "Blues")[5]),
@@ -95,11 +102,27 @@ ds4 <- ggplot(claim, aes(x=Density)) +
 plot(ds4)
 ```
 
-
+## Further explore the regions
 
 ```{r}
-fit <- glm(Claim~., data = claim)
-summary(fit)
+
+
+```
+
+
+
+## Try to fit
+
+```{r}
+fit.full <- glm(Claim~.,family=binomial,data = claim)  ## this one with default link func
+summary(fit.full)
+```
+brand and region should be recategorized, the other 6 predictors should be significant.
+
+```{r}
+
+
+
 ```
 
 ```{r}
