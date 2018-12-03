@@ -8,13 +8,13 @@ output: pdf_document
 ```{r}
 setwd("~/MSBA/ISOM5610/final")
 claim <- read.table("Claim.csv", sep = ",", header = TRUE)
-summary(claim)
-claim <- claim[-1]
 str(claim)
-summary(claim$Power)
-summary(claim$Gas)
-summary(claim$Region)
+claim <- claim[-1]
+summary(claim)
+sum(is.na(claim)) # check missing value
 
+summary(claim$Power)
+summary(claim$Region)
 ```
 
 ```{r}
@@ -34,18 +34,19 @@ library(RColorBrewer)
 
 
 ds1 <- ggplot(claim, aes(x=Exposure)) + 
-  geom_density(aes(fill=factor(Claim)),alpha=0.5)+
-  labs(title="Data Exploration", 
-       subtitle="Distribution of claim among different exposure", y="Claim", x="Exposure")+
-  scale_fill_manual(values = c(brewer.pal(7, "Reds")[5],brewer.pal(7, "Blues")[5]),
-                    labels = c("Claim=0", "Claim=1"))
+    geom_density(aes(fill=factor(Claim)),alpha=0.5) +
+    labs(title="Density of Claims by Exposure", 
+       y="Density of Claims", 
+       x="Exposure (Years)") + 
+    scale_fill_manual(name = "Claim",
+                      values = c(brewer.pal(7, "Reds")[5], brewer.pal(7, "Blues")[5]),
+                      labels = c("Claim=0", "Claim=1"))
 plot(ds1)
 
 
 bar1 <- ggplot() + geom_bar(data=claim, aes(x=Power,fill=factor(Claim)))+
-   labs(title="Data Exploration", 
-       subtitle="Distribution of claim among different Power types", y="Claim", x="Power")+
-scale_fill_manual(values = c(brewer.pal(7, "Reds")[4],brewer.pal(7, "Blues")[5]),
+   labs(title="Distribution of Claims among different Power Types", y="Count by Power of Car", x="Power of car")+
+scale_fill_manual(name = "Claim",values = c(brewer.pal(7, "Reds")[4],brewer.pal(7, "Blues")[5]),
                     labels = c("Claim=0", "Claim=1"))
 
 plot(bar1)
@@ -53,53 +54,81 @@ plot(bar1)
 
 ds2 <- ggplot(claim, aes(x=CarAge)) + 
   geom_density(aes(fill=factor(Claim)),alpha=0.5)+
-  labs(title="Data Exploration", 
-       subtitle="Distribution of claim among different car ages", y="Claim", x="CarAge")+
-  scale_fill_manual(values = c(brewer.pal(7, "Reds")[5],brewer.pal(7, "Blues")[5]),
+  labs(title="Density of Claims by Car Age", y="Density of Claims", x="Car Age")+
+  scale_fill_manual(name = "Claim",values = c(brewer.pal(7, "Reds")[5],brewer.pal(7, "Blues")[5]),
                     labels = c("Claim=0", "Claim=1"))
 plot(ds2)
 
 
 ds3 <- ggplot(claim, aes(x=DriverAge)) + 
   geom_density(aes(fill=factor(Claim)),alpha=0.5)+
-  labs(title="Data Exploration", 
-       subtitle="Distribution of claim among different driver ages", y="Claim", x="DriverAge")+
-  scale_fill_manual(values = c(brewer.pal(7, "Reds")[5],brewer.pal(7, "Blues")[5]),
+  labs(title="Density of Claims by Driver Age", y="Density of Claims", x="Driver Age")+
+  scale_fill_manual(name = "Claim",values = c(brewer.pal(7, "Reds")[5],brewer.pal(7, "Blues")[5]),
                     labels = c("Claim=0", "Claim=1"))
 plot(ds3)
 
 
 bar2 <- ggplot(claim, aes(x = Brand)) + geom_bar(aes(fill=factor(Claim)))+
-   labs(title="Data Exploration", 
-       subtitle="Distribution of claim among different brands", y="Claim", x="Brand")+
-scale_fill_manual(values = c(brewer.pal(7, "Reds")[4],brewer.pal(7, "Blues")[5]),
+   labs(title="Distribution of Claims among different Brands", y="Count by Brands", x="Brand")+
+scale_fill_manual(name = "Claim",values = c(brewer.pal(7, "Reds")[4],brewer.pal(7, "Blues")[5]),
                     labels = c("Claim=0", "Claim=1"))
 
 plot(bar2)
 
 bar3 <- ggplot(claim, aes(x = Gas)) + geom_bar(aes(fill=factor(Claim)))+
-   labs(title="Data Exploration", 
-       subtitle="Distribution of claim among different Gas types", y="Claim", x="Gas")+
-scale_fill_manual(values = c(brewer.pal(7, "Reds")[4],brewer.pal(7, "Blues")[5]),
+   labs(title="Distribution of Claims among different Gas Types", y="Count by Gas Types", x="Gas Type")+
+scale_fill_manual(name = "Claim",values = c(brewer.pal(7, "Reds")[4],brewer.pal(7, "Blues")[5]),
                     labels = c("Claim=0", "Claim=1"))
 
 plot(bar3)
 
 bar4 <- ggplot(claim, aes(x = Region)) + geom_bar(aes(fill=factor(Claim)))+
-   labs(title="Data Exploration", 
-       subtitle="Distribution of claim among different regions", y="Claim", x="Region")+
-scale_fill_manual(values = c(brewer.pal(7, "Reds")[4],brewer.pal(7, "Blues")[5]),
+   labs(title="Distribution of Claims among different Regions", y="Count by Regions", x="Region")+
+scale_fill_manual(name = "Claim",values = c(brewer.pal(7, "Reds")[4],brewer.pal(7, "Blues")[5]),
                     labels = c("Claim=0", "Claim=1"))
 
 plot(bar4)
 
 ds4 <- ggplot(claim, aes(x=Density)) + 
   geom_density(aes(fill=factor(Claim)),alpha=0.5)+
-  labs(title="Data Exploration", 
-       subtitle="Distribution of claim among different densities", y="Claim", x="Density")+
-  scale_fill_manual(values = c(brewer.pal(7, "Reds")[5],brewer.pal(7, "Blues")[5]),
+  labs(title="Density of Claims by Inhabitants Density", y="Density of Claims", x="Inhabitants Density (number of inhabitants per square km)")+
+  scale_fill_manual(name = "Claim",values = c(brewer.pal(7, "Reds")[5],brewer.pal(7, "Blues")[5]),
                     labels = c("Claim=0", "Claim=1"))
 plot(ds4)
+```
+
+```{r}
+# geographical plot of claim %
+library(dplyr)
+claim_by_region <- tapply(claim$Claim, claim$Region, sum)
+count_by_region <- summary(claim$Region)
+regionID <- names(count_by_region)
+regionIdx <- sub('.', '', regionID)
+
+Sys.setlocale('LC_ALL','French')
+library(readxl)
+url1<-'https://insee.fr/fr/statistiques/fichier/1893198/estim-pop-dep-sexe-gca-1975-2018.xls '
+tempdb <- tempfile()
+download.file(url1, tempdb, mode="wb")
+raw_db <- as.data.frame(read_excel(path = tempdb, range="2018!A6:B101", col_names=FALSE))
+names(raw_db) <- c("RIdx", "RName")
+
+region_table <- data.frame(regionID=regionID,
+                           regionName=raw_db$RName[match(regionIdx, raw_db$RIdx)],
+                           regionCount=count_by_region,
+                           regionClaim=claim_by_region,
+                           regionClaimPct=claim_by_region/count_by_region*100
+                           )
+
+library(maps)
+france_map <- map_data("france")
+claim_map <- merge(france_map, region_table, by.x = "region", by.y = "regionName", all.x = TRUE)
+claim_map <- arrange(claim_map, group, order)
+ggplot(claim_map, aes(x = long, y = lat, group = group, fill = regionClaimPct)) + 
+    geom_polygon(colour = "white")+
+    labs(title="Claim Rate (%) by Region", fill = "Claim Rate\n(%)") +
+    scale_fill_viridis_c() +
+    theme_void()
 ```
 
 ## Further explore the regions
@@ -126,6 +155,6 @@ brand and region should be recategorized, the other 6 predictors should be signi
 ```
 
 ```{r}
-library(ggplot2)
+
 
 ```
