@@ -97,45 +97,95 @@ ds4 <- ggplot(claim, aes(x=Density)) +
 plot(ds4)
 ```
 
+
 ```{r}
-# geographical plot of claim %
-library(dplyr)
-claim_by_region <- tapply(claim$Claim, claim$Region, sum)
-count_by_region <- summary(claim$Region)
-regionID <- names(count_by_region)
-regionIdx <- sub('.', '', regionID)
+# check inter-correlation between non-categorical variables
+claim1<-claim[c(2,4,5,9)]
+library(corrplot)
+corrplot.mixed(cor(claim1), upper = "ellipse", lower.col = "black")
 
-Sys.setlocale('LC_ALL','French')
-library(readxl)
-url1<-'https://insee.fr/fr/statistiques/fichier/1893198/estim-pop-dep-sexe-gca-1975-2018.xls '
-tempdb <- tempfile()
-download.file(url1, tempdb, mode="wb")
-raw_db <- as.data.frame(read_excel(path = tempdb, range="2018!A6:B101", col_names=FALSE))
-names(raw_db) <- c("RIdx", "RName")
+# check relationship between categorical variables
+attach(claim)
+r1 <- ggplot() +
+  aes(x = Brand, color = Power, group = Power, y = Claim) +
+  stat_summary(fun.y = mean, geom = "point") +
+  stat_summary(fun.y = mean, geom = "line") + ggtitle('Brand:Power')+
+  theme(axis.text.x = element_text(angle = 20, hjust = 1,size=8))
 
-region_table <- data.frame(regionID=regionID,
-                           regionName=raw_db$RName[match(regionIdx, raw_db$RIdx)],
-                           regionCount=count_by_region,
-                           regionClaim=claim_by_region,
-                           regionClaimPct=claim_by_region/count_by_region*100
-                           )
 
-library(maps)
-france_map <- map_data("france")
-claim_map <- merge(france_map, region_table, by.x = "region", by.y = "regionName", all.x = TRUE)
-claim_map <- arrange(claim_map, group, order)
-ggplot(claim_map, aes(x = long, y = lat, group = group, fill = regionClaimPct)) + 
-    geom_polygon(colour = "white")+
-    labs(title="Claim Rate (%) by Region", fill = "Claim Rate\n(%)") +
-    scale_fill_viridis_c() +
-    theme_void()
+r2 <- ggplot() +
+  aes(x = Brand, color = Gas, group = Gas, y = Claim) +
+  stat_summary(fun.y = mean, geom = "point") +
+  stat_summary(fun.y = mean, geom = "line") + ggtitle('Brand:Gas')+
+  theme(axis.text.x = element_text(angle = 20, hjust = 1,size=8))
+
+
+r3 <- ggplot() +
+  aes(x = Brand, color = Region, group = Region, y = Claim) +
+  stat_summary(fun.y = mean, geom = "point") +
+  stat_summary(fun.y = mean, geom = "line") + ggtitle('Brand:Region')+
+  theme(axis.text.x = element_text(angle = 20, hjust = 1,size=8))
+
+
+r4 <- ggplot() +
+  aes(x = Region, color = Gas, group = Gas, y = Claim) +
+  stat_summary(fun.y = mean, geom = "point") +
+  stat_summary(fun.y = mean, geom = "line") + ggtitle('Region:Gas')
+
+
+r5 <- ggplot() +
+  aes(x = Region, color = Power, group = Power, y = Claim) +
+  stat_summary(fun.y = mean, geom = "point") +
+  stat_summary(fun.y = mean, geom = "line") + ggtitle('Region:Power')
+
+
+r6 <- ggplot() +
+  aes(x = Power, color = Gas, group = Gas, y = Claim) +
+  stat_summary(fun.y = mean, geom = "point") +
+  stat_summary(fun.y = mean, geom = "line") + ggtitle('Power:Gas')
+
+plot(r1)
+plot(r2)
+plot(r3)
+plot(r4)
+plot(r5)
+plot(r6)
+# library(gridExtra)
+# grid.arrange(r1, r2, r3, r4, r5, r6, nrow = 3, ncol=2)
 ```
 
-## Further explore the regions
-
 ```{r}
-
-
+# geographical plot of claim %
+# library(dplyr)
+# claim_by_region <- tapply(claim$Claim, claim$Region, sum)
+# count_by_region <- summary(claim$Region)
+# regionID <- names(count_by_region)
+# regionIdx <- sub('.', '', regionID)
+# 
+# Sys.setlocale('LC_ALL','French')
+# library(readxl)
+# url1<-'https://insee.fr/fr/statistiques/fichier/1893198/estim-pop-dep-sexe-gca-1975-2018.xls '
+# tempdb <- tempfile()
+# download.file(url1, tempdb, mode="wb")
+# raw_db <- as.data.frame(read_excel(path = tempdb, range="2018!A6:B101", col_names=FALSE))
+# names(raw_db) <- c("RIdx", "RName")
+# 
+# region_table <- data.frame(regionID=regionID,
+#                            regionName=raw_db$RName[match(regionIdx, raw_db$RIdx)],
+#                            regionCount=count_by_region,
+#                            regionClaim=claim_by_region,
+#                            regionClaimPct=claim_by_region/count_by_region*100
+#                            )
+# 
+# library(maps)
+# france_map <- map_data("france")
+# claim_map <- merge(france_map, region_table, by.x = "region", by.y = "regionName", all.x = TRUE)
+# claim_map <- arrange(claim_map, group, order)
+# ggplot(claim_map, aes(x = long, y = lat, group = group, fill = regionClaimPct)) + 
+#     geom_polygon(colour = "white")+
+#     labs(title="Claim Rate (%) by Region", fill = "Claim Rate\n(%)") +
+#     scale_fill_viridis_c() +
+#     theme_void()
 ```
 
 
@@ -145,6 +195,28 @@ ggplot(claim_map, aes(x = long, y = lat, group = group, fill = regionClaimPct)) 
 ```{r}
 fit.full <- glm(Claim~.,family=binomial,data = claim)  ## this one with default link func
 summary(fit.full)
+```
+
+```{r}
+library(lmtest)
+
+
+fit.int1 <- update(fit.full,.~.+Power:Gas)
+lrtest(fit.int1,fit.full)
+
+fit.int2 <- update(fit.full,.~.+Power:Gas+Region:Gas)
+lrtest(fit.int1,fit.int2)
+
+fit.int3 <- update(fit.full,.~.+Power:Gas+Region:Power)
+lrtest(fit.int1,fit.int3)
+
+fit.int4 <- update(fit.full,.~.+Power:Gas+Brand:Power)
+lrtest(fit.int1,fit.int4)
+
+fit.int5 <- update(fit.full,.~.+Power:Gas+Brand:Region)
+lrtest(fit.int1,fit.int5)
+
+## almost all significant
 ```
 brand and region should be recategorized, the other 6 predictors should be significant.
 
