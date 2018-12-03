@@ -95,6 +95,11 @@ ds4 <- ggplot(claim, aes(x=Density)) +
   scale_fill_manual(name = "Claim",values = c(brewer.pal(7, "Reds")[5],brewer.pal(7, "Blues")[5]),
                     labels = c("Claim=0", "Claim=1"))
 plot(ds4)
+
+# check inter-correlation between non-categorical variables
+claim1<-claim[c(2,4,5,9)]
+library(corrplot)
+corrplot.mixed(cor(claim1), upper = "ellipse", lower.col = "black")
 ```
 
 
