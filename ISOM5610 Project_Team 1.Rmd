@@ -102,12 +102,6 @@ ds4 <- ggplot(claim, aes(x=Density)) +
 plot(ds4)
 
 
-# check inter-correlation between non-categorical variables
-claim1<-claim[c(2,4,5,9)]
-library(corrplot)
-corrplot.mixed(cor(claim1), upper = "ellipse", lower.col = "black")
-# the correlation between non-categorical predictors are very weak, therefore chance of multicollinearity problem is slim
-
 ```
 
 
@@ -173,10 +167,24 @@ summary(fit.full)
 ```{r}
 fit.step <- step(fit.full)
 summary(fit.step)
-# the stepwise result suggests all 8 predictors are useful
+# the stepwise result suggests all 8 predictors are useful. We use fit.full as the base model going forward.
+rm(fit.step)
 ```
 
 ## Interaction terms
+
+```{r}
+## check inter-correlation between non-categorical variables
+claim1<-claim[c(2,4,5,9)]
+library(corrplot)
+corrplot.mixed(cor(claim1), upper = "ellipse", lower.col = "black")
+# the correlation between non-categorical predictors are very weak, therefore chance of multicollinearity problem is slim
+
+## vif
+library(car)
+vif(fit.full)
+# all <10
+```
 
 ```{r}
 ## Consider the interaction between the categorical variables
@@ -230,7 +238,7 @@ plot(r6)
 # library(gridExtra)
 # grid.arrange(r1, r2, r3, r4, r5, r6, nrow = 3, ncol=2)
 
-# from the interaction plots, we can find at least minor interaction effects for all 6 pairs. Especially, we suspect there may be significant interactions between the follwoing pairs:
+# From the interaction plots, we can find at least minor interaction effects for all 6 pairs (non-parallel crossed lines). Especially, we suspect there may be significant interactions between the follwoing pairs:
 # (1)Brand:Power
 # (2)Brand:Region
 # (3)Region:Power
@@ -245,29 +253,80 @@ fit.int1 <- update(fit.full,.~.+Power:Gas)
 lrtest(fit.int1,fit.full)
 # interaction bewtween Power:Gas is significant, we need to add this interaction item
 
-fit.int2 <- update(fit.full,.~.+Power:Gas+Region:Gas)
+fit.int2 <- update(fit.int1,.~.+Region:Gas)
 lrtest(fit.int1,fit.int2)
+# insignificant
+rm(fit.int2)
 
-fit.int3 <- update(fit.full,.~.+Power:Gas+Region:Power)
+fit.int3 <- update(fit.int1,.~.+Region:Power)
 lrtest(fit.int1,fit.int3)
+# Significant
+rm(fit.int3)
 
-fit.int4 <- update(fit.full,.~.+Power:Gas+Brand:Power)
+fit.int4 <- update(fit.int1,.~.+Brand:Power)
 lrtest(fit.int1,fit.int4)
+# Significant
+rm(fit.int4)
 
-fit.int5 <- update(fit.full,.~.+Power:Gas+Brand:Region)
+fit.int5 <- update(fit.int1,.~.+Brand:Region)
 lrtest(fit.int1,fit.int5)
+# Significant
+rm(fit.int4)
 
-## almost all significant
+fit.int6 <- update(fit.int1,.~.+Brand:Gas)
+lrtest(fit.int1,fit.int6)
+# insignificant
+rm(fit.int6)
+
+## put all significant items together
+
+fit.int7 <- update(fit.int1,.~.+Region:Power +Brand:Power +Brand:Region)
 ```
 brand and region should be recategorized, the other 6 predictors should be significant.
 
-```{r}
-
-
-
-```
+# Deviance Goodness of Fit Test
 
 ```{r}
-
-
+1-pchisq(fit.int7$deviance,fit.int7$df.residual)
+# p-value~1, i.e. it is a good fit model 
 ```
+
+# Esimtated Probabilities 
+
+```{r}
+prob <- predict(fit.int7, newdata=claim_test, type = 'response')
+table(claim_test$Claim, prob > 0.05)
+
+library(InformationValue)
+plotROC(claim_test$Claim,prob)
+
+#Double density plot
+p <- predict(fit.int7,type='response')
+temp_train <- cbind(claim_train,p)
+p <- prob
+temp_test <- cbind(claim_test,p)
+ggplot(temp_train, aes(p, color = as.factor(Claim))) + 
+  geom_density(size = 1) +
+  ggtitle("Training Set's estimated probabilities") 
+
+#Confusion Matrix plot
+source("~/MSBA/ISOM5610/Lect5/unbalanced_function.R")
+
+cm_info <- ConfusionMatrixInfo( data = temp_test, predict = "p", actual = "Claim", cutoff = 0.05 )
+cm_info$plot
+
+#Optimal cutoff by considering cost
+cost_fp <- 10
+cost_fn <- 20
+roc_info <- ROCInfo( data = cm_info$data, predict = "predict", 
+                     actual = "actual", cost.fp = cost_fp, cost.fn = cost_fn )
+grid.draw(roc_info$plot)
+
+#error measure based on new cutoff
+detach('package:caret')
+sensitivity(test_set$default,prob,threshold = roc_info$cutoff)
+specificity(test_set$default,prob,threshold = roc_info$cutoff)
+confusionMatrix(test_set$default,prob,threshold = roc_info$cutoff)
+misClassError(test_set$default,prob,threshold = roc_info$cutoff)
+```
+
