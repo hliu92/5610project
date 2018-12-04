@@ -247,36 +247,36 @@ plot(r6)
 
 ```{r}
 # For safe play, we further verify the significance of them by using LR test
-library(lmtest)
+#library(lmtest)
 
-fit.int1 <- update(fit.full,.~.+Power:Gas)
-lrtest(fit.int1,fit.full)
+#fit.int1 <- update(fit.full,.~.+Power:Gas)
+#lrtest(fit.int1,fit.full)
 # interaction bewtween Power:Gas is significant, we need to add this interaction item
 
-fit.int2 <- update(fit.int1,.~.+Region:Gas)
-lrtest(fit.int1,fit.int2)
+#fit.int2 <- update(fit.int1,.~.+Region:Gas)
+#lrtest(fit.int1,fit.int2)
 # insignificant
-rm(fit.int2)
+#rm(fit.int2)
 
-fit.int3 <- update(fit.int1,.~.+Region:Power)
-lrtest(fit.int1,fit.int3)
+#fit.int3 <- update(fit.int1,.~.+Region:Power)
+#lrtest(fit.int1,fit.int3)
 # Significant
-rm(fit.int3)
+#rm(fit.int3)
 
-fit.int4 <- update(fit.int1,.~.+Brand:Power)
-lrtest(fit.int1,fit.int4)
+#fit.int4 <- update(fit.int1,.~.+Brand:Power)
+#lrtest(fit.int1,fit.int4)
 # Significant
-rm(fit.int4)
+#rm(fit.int4)
 
-fit.int5 <- update(fit.int1,.~.+Brand:Region)
-lrtest(fit.int1,fit.int5)
+#fit.int5 <- update(fit.int1,.~.+Brand:Region)
+#lrtest(fit.int1,fit.int5)
 # Significant
-rm(fit.int4)
+#rm(fit.int4)
 
-fit.int6 <- update(fit.int1,.~.+Brand:Gas)
-lrtest(fit.int1,fit.int6)
+#fit.int6 <- update(fit.int1,.~.+Brand:Gas)
+#lrtest(fit.int1,fit.int6)
 # insignificant
-rm(fit.int6)
+#rm(fit.int6)
 
 ## put all significant items together
 
@@ -287,7 +287,7 @@ brand and region should be recategorized, the other 6 predictors should be signi
 # Deviance Goodness of Fit Test
 
 ```{r}
-1-pchisq(fit.int7$deviance,fit.full$df.residual)
+1-pchisq(fit.full$deviance,fit.full$df.residual)
 # p-value~1, i.e. it is a good fit model 
 ```
 
@@ -316,17 +316,16 @@ cm_info <- ConfusionMatrixInfo( data = temp_test, predict = "p", actual = "Claim
 cm_info$plot
 
 #Optimal cutoff by considering cost
-cost_fp <- 10
-cost_fn <- 20
+cost_fp <- 1
+cost_fn <- 30
 roc_info <- ROCInfo( data = cm_info$data, predict = "predict", 
                      actual = "actual", cost.fp = cost_fp, cost.fn = cost_fn )
 grid.draw(roc_info$plot)
 
 #error measure based on new cutoff
-detach('package:caret')
-sensitivity(test_set$default,prob,threshold = roc_info$cutoff)
-specificity(test_set$default,prob,threshold = roc_info$cutoff)
-confusionMatrix(test_set$default,prob,threshold = roc_info$cutoff)
-misClassError(test_set$default,prob,threshold = roc_info$cutoff)
+#sensitivity(claim_test$Claim,prob,threshold = roc_info$cutoff)
+#specificity(claim_test$Claim,prob,threshold = roc_info$cutoff)
+#confusionMatrix(claim_test$Claim,prob,threshold = roc_info$cutoff)
+#misClassError(claim_test$Claim,prob,threshold = roc_info$cutoff)
 ```
 
