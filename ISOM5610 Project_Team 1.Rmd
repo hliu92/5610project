@@ -10,6 +10,11 @@ setwd("~/MSBA/ISOM5610/final")
 claim <- read.table("Claim.csv", sep = ",", header = TRUE)
 str(claim)
 claim <- claim[-1]
+```
+
+# Descriptive Analysis
+
+```{r}
 summary(claim)
 sum(is.na(claim)) # check missing value
 
@@ -18,12 +23,12 @@ summary(claim$Region)
 ```
 
 ```{r}
+## this chunk calculate average values in different categories
 avg_power <- data.frame(sapply(split(claim$Claim,claim$Power),mean))
 # colnames(avg_power) <- 'avg'
 # avg_power$Power <- rownames(avg_power)
 avg_brand <- sapply(split(claim$Claim,claim$Brand),mean)
 avg_region <- sapply(split(claim$Claim,claim$Region),mean)
-## this chunk calculate average values in different categories
 ```
 
 There is no missing value. Claim: binary. Power: 12 categories. Brand:7 categories. Gas: binary. Region: 10 regions.
@@ -96,21 +101,88 @@ ds4 <- ggplot(claim, aes(x=Density)) +
                     labels = c("Claim=0", "Claim=1"))
 plot(ds4)
 
+
 # check inter-correlation between non-categorical variables
 claim1<-claim[c(2,4,5,9)]
 library(corrplot)
 corrplot.mixed(cor(claim1), upper = "ellipse", lower.col = "black")
+# the correlation between non-categorical predictors are very weak, therefore chance of multicollinearity problem is slim
+
 ```
 
 
 ```{r}
-# check inter-correlation between non-categorical variables
-claim1<-claim[c(2,4,5,9)]
-library(corrplot)
-corrplot.mixed(cor(claim1), upper = "ellipse", lower.col = "black")
+# geographical plot of claim %
+
+library(dplyr)
+claim_by_region <- tapply(claim$Claim, claim$Region, sum)
+count_by_region <- summary(claim$Region)
+regionID <- names(count_by_region)
+regionIdx <- sub('.', '', regionID)
+
+Sys.setlocale('LC_ALL','French')
+library(readxl)
+url1<-'https://insee.fr/fr/statistiques/fichier/1893198/estim-pop-dep-sexe-gca-1975-2018.xls '
+tempdb <- tempfile()
+download.file(url1, tempdb, mode="wb")
+raw_db <- as.data.frame(read_excel(path = tempdb, range="2018!A6:B101", col_names=FALSE))
+names(raw_db) <- c("RIdx", "RName")
+
+region_table <- data.frame(regionID=regionID,
+                        regionName=raw_db$RName[match(regionIdx, raw_db$RIdx)],
+                        regionCount=count_by_region,
+                        regionClaim=claim_by_region,
+                        regionClaimPct=claim_by_region/count_by_region*100
+                        )
+
+library(maps)
+france_map <- map_data("france")
+claim_map <- merge(france_map, region_table, by.x = "region", by.y = "regionName", all.x = TRUE)
+claim_map <- arrange(claim_map, group, order)
+ggplot(claim_map, aes(x = long, y = lat, group = group, fill = regionClaimPct)) + 
+    geom_polygon(colour = "white") +
+    labs(title="Claim Rate (%) by Region", fill = "Claim Rate\n(%)") +
+    scale_fill_viridis_c() +
+    theme_void()
+```
+
+# Data Partition
+
+```{r}
+## there are 412,412 observatoins. Ramdomly partition ~80% and ~20% of the data into training and testing set
+
+library(caTools)
+set.seed(1111)
+spl <- sample.split(claim$Claim, SplitRatio= 0.8)
+claim_train <- subset(claim, spl==TRUE)
+claim_test <- subset(claim, spl==FALSE)
+```
+
+
+# Fit the Model
+
+## The Full Model
+
+```{r}
+fit.full <- glm(Claim~.,family=binomial,data = claim_train)  ## this one with default link func
+summary(fit.full)
+```
+
+## Stepwise Selection
+
+```{r}
+fit.step <- step(fit.full)
+summary(fit.step)
+# the stepwise result suggests all 8 predictors are useful
+```
+
+## Interaction terms
+
+```{r}
+## Consider the interaction between the categorical variables
 
 # check relationship between categorical variables
-attach(claim)
+attach(claim_train)
 r1 <- ggplot() +
   aes(x = Brand, color = Power, group = Power, y = Claim) +
   stat_summary(fun.y = mean, geom = "point") +
@@ -157,57 +229,21 @@ plot(r5)
 plot(r6)
 # library(gridExtra)
 # grid.arrange(r1, r2, r3, r4, r5, r6, nrow = 3, ncol=2)
+
+# from the interaction plots, we can find at least minor interaction effects for all 6 pairs. Especially, we suspect there may be significant interactions between the follwoing pairs:
+# (1)Brand:Power
+# (2)Brand:Region
+# (3)Region:Power
+# (4)Power:Gas
 ```
 
 ```{r}
-# geographical plot of claim %
-# library(dplyr)
-# claim_by_region <- tapply(claim$Claim, claim$Region, sum)
-# count_by_region <- summary(claim$Region)
-# regionID <- names(count_by_region)
-# regionIdx <- sub('.', '', regionID)
-# 
-# Sys.setlocale('LC_ALL','French')
-# library(readxl)
-# url1<-'https://insee.fr/fr/statistiques/fichier/1893198/estim-pop-dep-sexe-gca-1975-2018.xls '
-# tempdb <- tempfile()
-# download.file(url1, tempdb, mode="wb")
-# raw_db <- as.data.frame(read_excel(path = tempdb, range="2018!A6:B101", col_names=FALSE))
-# names(raw_db) <- c("RIdx", "RName")
-# 
-# region_table <- data.frame(regionID=regionID,
-#                            regionName=raw_db$RName[match(regionIdx, raw_db$RIdx)],
-#                            regionCount=count_by_region,
-#                            regionClaim=claim_by_region,
-#                            regionClaimPct=claim_by_region/count_by_region*100
-#                            )
-# 
-# library(maps)
-# france_map <- map_data("france")
-# claim_map <- merge(france_map, region_table, by.x = "region", by.y = "regionName", all.x = TRUE)
-# claim_map <- arrange(claim_map, group, order)
-# ggplot(claim_map, aes(x = long, y = lat, group = group, fill = regionClaimPct)) + 
-#     geom_polygon(colour = "white")+
-#     labs(title="Claim Rate (%) by Region", fill = "Claim Rate\n(%)") +
-#     scale_fill_viridis_c() +
-#     theme_void()
-```
-
-
-
-## Try to fit
-
-```{r}
-fit.full <- glm(Claim~.,family=binomial,data = claim)  ## this one with default link func
-summary(fit.full)
-```
-
-```{r}
+# For safe play, we further verify the significance of them by using LR test
 library(lmtest)
-
 
 fit.int1 <- update(fit.full,.~.+Power:Gas)
 lrtest(fit.int1,fit.full)
+# interaction bewtween Power:Gas is significant, we need to add this interaction item
 
 fit.int2 <- update(fit.full,.~.+Power:Gas+Region:Gas)
 lrtest(fit.int1,fit.int2)
